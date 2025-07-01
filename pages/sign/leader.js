@@ -53,7 +53,7 @@ export default function LeaderSignPage() {
       return;
     }
     const dataUrl = sigPadRef.current.toDataURL();
-    const docName = "온습도 점검표"; // 실제 문서명에 맞게 동적으로 변경 가능
+    const docName = getQueryParam("docName"); // 쿼리스트링에서 동적으로 문서명 받기
     console.log("서명 전송 데이터", { dataUrl, row, role, docName });
     try {
       const res = await fetch("/api/upload-signature", {
