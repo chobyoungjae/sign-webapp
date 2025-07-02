@@ -1,25 +1,32 @@
 import React, { useRef, useState, useEffect } from "react";
 import SignaturePad from "signature_pad";
+import { useRouter } from "next/router";
 
-function getQueryParam(param) {
-  if (typeof window === "undefined") return "";
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param) || "";
+function getQueryParam(param, query) {
+  return query[param] || "";
 }
 
-export default function LeaderSignPage() {
+// 역할별 한글명칭(여러명 지원)
+const roleLabels = {
+  leader: ["팀장", "조병재"],
+  reviewer: ["검토자"],
+  ceo: ["대표"],
+  // 필요시 추가
+};
+
+export default function SignPage() {
   const canvasRef = useRef();
   const sigPadRef = useRef();
   const [status, setStatus] = useState("ready");
   const [name, setName] = useState("");
-  const [role, setRole] = useState("");
   const [row, setRow] = useState("");
+  const router = useRouter();
+  const { role } = router.query;
 
   useEffect(() => {
-    setName(getQueryParam("name"));
-    setRole(getQueryParam("role"));
-    setRow(getQueryParam("row"));
-  }, []);
+    setName(getQueryParam("name", router.query));
+    setRow(getQueryParam("row", router.query));
+  }, [router.query]);
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -36,13 +43,6 @@ export default function LeaderSignPage() {
     };
   }, [canvasRef.current]);
 
-  const handleClose = () => {
-    window.close();
-    if (window.opener) {
-      window.opener.postMessage("close-sign-popup", "*");
-    }
-  };
-
   const handleSave = async () => {
     setStatus("saving");
     if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
@@ -53,16 +53,13 @@ export default function LeaderSignPage() {
       return;
     }
     const dataUrl = sigPadRef.current.toDataURL();
-    const docName = getQueryParam("docName"); // 쿼리스트링에서 동적으로 문서명 받기
-    console.log("서명 전송 데이터", { dataUrl, row, role, docName });
+    const docName = getQueryParam("docName", router.query);
     try {
       const res = await fetch("/api/upload-signature", {
         method: "POST",
         body: JSON.stringify({ docName, dataUrl, row, role }),
         headers: { "Content-Type": "application/json" },
       });
-      const result = await res.text();
-      console.log("Apps Script 응답:", result);
       if (res.ok) {
         setStatus("done");
         setTimeout(() => {
@@ -70,10 +67,9 @@ export default function LeaderSignPage() {
           if (window.opener) {
             window.opener.postMessage("close-sign-popup", "*");
           }
-        }, 700); // 0.7초 후 자동 닫힘
+        }, 700);
       } else setStatus("ready");
     } catch (err) {
-      console.error("Apps Script fetch 에러:", err);
       setStatus("ready");
     }
   };
@@ -83,6 +79,13 @@ export default function LeaderSignPage() {
       sigPadRef.current.clear();
     }
   };
+
+  // 역할 한글명칭(여러명 지원)
+  const roleLabelArr = roleLabels[role] || [role];
+  const roleLabel = roleLabelArr.join(", ");
+  // name이 여러명(쉼표구분)일 때 표시
+  const nameArr = name ? name.split(",") : [];
+  const nameLabel = nameArr.length > 1 ? nameArr.join(", ") : name;
 
   return (
     <div
@@ -101,8 +104,8 @@ export default function LeaderSignPage() {
     >
       <div style={{ marginBottom: 10, fontWeight: "bold" }}>
         {status === "done"
-          ? "서명이 완료되었습니다."
-          : "서명 후 '서명완료'를 눌러주세요."}
+          ? `${roleLabel} 서명이 완료되었습니다.`
+          : `${roleLabel} 서명 후 '서명완료'를 눌러주세요.`}
       </div>
       <div
         style={{
@@ -167,17 +170,18 @@ export default function LeaderSignPage() {
       >
         {status === "ready" && "서명완료"}
         {status === "saving" && "서명 중..."}
-        {status === "done" && "서명이 완료되었습니다! 창이 곧 닫힙니다."}
+        {status === "done" &&
+          `${roleLabel} 서명이 완료되었습니다! 창이 곧 닫힙니다.`}
       </button>
       <div style={{ marginTop: 8, fontSize: 14, color: "#555" }}>
-        {name && (
+        {nameLabel && (
           <span>
-            서명자: <b>{name}</b>
+            서명자: <b>{nameLabel}</b>
           </span>
         )}
         {role && (
           <span style={{ marginLeft: 8 }}>
-            역할: <b>{role}</b>
+            역할: <b>{roleLabel}</b>
           </span>
         )}
       </div>
