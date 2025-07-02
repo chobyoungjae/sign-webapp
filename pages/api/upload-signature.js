@@ -15,12 +15,12 @@ export default async function handler(req, res) {
 
   // 3. 문서명으로 해당 행 찾기
   const row = records.find((r) => r["문서명"] === docName);
-  if (!row || !row["최신배포 스크립트 웹앱URL"]) {
+  if (!row || !row["최신 배포 URL"]) {
     return res
       .status(400)
       .json({ error: "문서명에 해당하는 웹앱 URL을 찾을 수 없습니다." });
   }
-  const GAS_WEBAPP_URL = row["최신배포 스크립트 웹앱URL"];
+  const GAS_WEBAPP_URL = row["최신 배포 URL"];
 
   // 4. Apps Script로 POST
   const body = JSON.stringify(rest);
