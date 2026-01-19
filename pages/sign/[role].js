@@ -65,7 +65,8 @@ export default function SignPage() {
         setTimeout(() => {
           window.close();
           if (window.opener) {
-            window.opener.postMessage("close-sign-popup", "*");
+            // 동일 출처에만 메시지 전송 (보안 강화)
+            window.opener.postMessage("close-sign-popup", window.location.origin);
           }
         }, 700);
       } else setStatus("ready");

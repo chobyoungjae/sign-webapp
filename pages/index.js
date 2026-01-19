@@ -3,6 +3,10 @@ import { useEffect } from "react";
 export default function Home() {
   useEffect(() => {
     function handleMessage(event) {
+      // 동일 출처에서 온 메시지만 처리 (보안 강화)
+      if (event.origin !== window.location.origin) {
+        return;
+      }
       if (event.data === "close-sign-popup") {
         window.location.reload(); // 팝업 닫힘 신호 받으면 새로고침
       }
