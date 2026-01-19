@@ -81,11 +81,11 @@ export default async function handler(req, res) {
   const GAS_WEBAPP_URL = row["최신 배포 URL"];
 
   // 4. Apps Script로 POST
-  const body = JSON.stringify(rest);
+  const postBody = JSON.stringify(rest);
   const response = await fetch(GAS_WEBAPP_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body,
+    body: postBody,
   });
   const text = await response.text();
   res.status(response.status).send(text);
